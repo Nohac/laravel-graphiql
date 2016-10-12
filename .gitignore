@@ -1,0 +1,11 @@
+/vendor
+/node_modules
+composer.phar
+composer.lock
+composer-extra-assets.lock
+.DS_Store
+.idea
+.env
+.bowerrc
+bower.json
+package.json
