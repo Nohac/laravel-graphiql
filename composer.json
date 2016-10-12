@@ -1,5 +1,5 @@
 {
-  "name": "noh4ck/laravel-graphiql",
+  "name": "noh4ck/graphiql",
   "description": "Graphiql ui for laravel",
   "keywords": [
     "laravel",
@@ -17,19 +17,10 @@
     "php": ">=5.5.9",
     "laravel/framework": "5.1.*|5.2.*|5.3.*"
   },
-  "require-dev": {
-    "orchestra/testbench": "~3.0",
-    "codeclimate/php-test-reporter": "~0.1"
-  },
   "autoload": {
     "psr-4": {
       "Graphiql\\": "src"
     }
-  },
-  "autoload-dev": {
-    "classmap": [
-      "tests/TestCase.php"
-    ]
   },
   "minimum-stability": "dev",
   "prefer-stable": true
