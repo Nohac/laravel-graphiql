@@ -663,7 +663,7 @@ var TypeDoc = function (_React$Component5) {
                 ), ')'],
                 ': ',
                 _react2.default.createElement(TypeLink, { type: field.type, onClick: onClickType }),
-                (field.isDeprecated || field.deprecationReason) && _react2.default.createElement(
+                field.isDeprecated && _react2.default.createElement(
                   'span',
                   { className: 'doc-alert-text' },
                   ' (DEPRECATED)'
@@ -692,7 +692,7 @@ var TypeDoc = function (_React$Component5) {
                 'div',
                 { className: 'enum-value' },
                 value.name,
-                (value.isDeprecated || value.deprecationReason) && _react2.default.createElement(
+                value.isDeprecated && _react2.default.createElement(
                   'span',
                   { className: 'doc-alert-text' },
                   ' (DEPRECATED)'
@@ -1105,7 +1105,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.GraphiQL = undefined;
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
@@ -1361,7 +1361,7 @@ var GraphiQL = exports.GraphiQL = function (_React$Component) {
     key: 'componentWillUnmount',
     value: function componentWillUnmount() {
       this._storageSet('query', this.state.query);
-      this._storageSet('variables', this.state.variables || '');
+      this._storageSet('variables', this.state.variables);
       this._storageSet('operationName', this.state.operationName);
       this._storageSet('editorFlex', this.state.editorFlex);
       this._storageSet('variableEditorHeight', this.state.variableEditorHeight);
@@ -1514,7 +1514,7 @@ var GraphiQL = exports.GraphiQL = function (_React$Component) {
             _react2.default.createElement(
               'div',
               { className: 'docExplorerHide', onClick: this.handleToggleDocs },
-              '\u2715'
+              '✕'
             )
           )
         )
@@ -1649,23 +1649,7 @@ var GraphiQL = exports.GraphiQL = function (_React$Component) {
       var _this5 = this;
 
       var fetcher = this.props.fetcher;
-      var jsonVariables = null;
-
-      try {
-        jsonVariables = variables && variables.trim() !== '' ? JSON.parse(variables) : null;
-      } catch (error) {
-        throw new Error('Variables are invalid JSON: ' + error.message + '.');
-      }
-
-      if ((typeof jsonVariables === 'undefined' ? 'undefined' : _typeof(jsonVariables)) !== 'object') {
-        throw new Error('Variables are not a JSON object.');
-      }
-
-      var fetch = fetcher({
-        query: query,
-        variables: jsonVariables,
-        operationName: operationName
-      });
+      var fetch = fetcher({ query: query, variables: variables, operationName: operationName });
 
       if (isPromise(fetch)) {
         // If fetcher returned a Promise, then call the callback when the promise
@@ -1699,7 +1683,10 @@ var GraphiQL = exports.GraphiQL = function (_React$Component) {
 
         return subscription;
       } else {
-        throw new Error('Fetcher did not return Promise or Observable.');
+        this.setState({
+          isWaitingForResponse: false,
+          response: 'Fetcher did not return Promise or Observable.'
+        });
       }
     }
   }, {
@@ -1804,29 +1791,22 @@ var _initialiseProps = function _initialiseProps() {
       }
     }
 
-    try {
-      // _fetchQuery may return a subscription.
-      var subscription = _this6._fetchQuery(editedQuery, variables, operationName, function (result) {
-        if (queryID === _this6._editorQueryID) {
-          _this6.setState({
-            isWaitingForResponse: false,
-            response: JSON.stringify(result, null, 2)
-          });
-        }
-      });
+    // _fetchQuery may return a subscription.
+    var subscription = _this6._fetchQuery(editedQuery, variables, operationName, function (result) {
+      if (queryID === _this6._editorQueryID) {
+        _this6.setState({
+          isWaitingForResponse: false,
+          response: JSON.stringify(result, null, 2)
+        });
+      }
+    });
 
-      _this6.setState({
-        isWaitingForResponse: true,
-        response: null,
-        subscription: subscription,
-        operationName: operationName
-      });
-    } catch (error) {
-      _this6.setState({
-        isWaitingForResponse: false,
-        response: error.message
-      });
-    }
+    _this6.setState({
+      isWaitingForResponse: true,
+      response: null,
+      subscription: subscription,
+      operationName: operationName
+    });
   };
 
   this.handleStopQuery = function () {
@@ -5930,7 +5910,6 @@ function namedKey(style) {
         self.lineComment(from, to, options);
       return;
     }
-    if (/\bcomment\b/.test(self.getTokenTypeAt(Pos(from.line, 0)))) return
 
     var end = Math.min(to.line, self.lastLine());
     if (end != from.line && to.ch == 0 && nonWS.test(self.getLine(end))) --end;
@@ -5990,15 +5969,13 @@ function namedKey(style) {
     var endString = options.blockCommentEnd || mode.blockCommentEnd;
     if (!startString || !endString) return false;
     var lead = options.blockCommentLead || mode.blockCommentLead;
-    var startLine = self.getLine(start), open = startLine.indexOf(startString)
-    if (open == -1) return false
-    var endLine = end == start ? startLine : self.getLine(end)
-    var close = endLine.indexOf(endString, end == start ? open + startString.length : 0);
+    var startLine = self.getLine(start), endLine = end == start ? startLine : self.getLine(end);
+    var open = startLine.indexOf(startString), close = endLine.lastIndexOf(endString);
     if (close == -1 && start != end) {
       endLine = self.getLine(--end);
-      close = endLine.indexOf(endString);
+      close = endLine.lastIndexOf(endString);
     }
-    if (close == -1 ||
+    if (open == -1 || close == -1 ||
         !/comment/.test(self.getTokenTypeAt(Pos(start, open + 1))) ||
         !/comment/.test(self.getTokenTypeAt(Pos(end, close + 1))))
       return false;
@@ -11752,8 +11729,8 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
     on(inp, "keyup", function(e) { onKeyUp.call(cm, e); });
     on(inp, "keydown", operation(cm, onKeyDown));
     on(inp, "keypress", operation(cm, onKeyPress));
-    on(inp, "focus", function (e) { onFocus(cm, e); });
-    on(inp, "blur", function (e) { onBlur(cm, e); });
+    on(inp, "focus", bind(onFocus, cm));
+    on(inp, "blur", bind(onBlur, cm));
   }
 
   function dragDropChanged(cm, value, old) {
@@ -12481,12 +12458,12 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
     }, 100);
   }
 
-  function onFocus(cm, e) {
+  function onFocus(cm) {
     if (cm.state.delayingBlurEvent) cm.state.delayingBlurEvent = false;
 
     if (cm.options.readOnly == "nocursor") return;
     if (!cm.state.focused) {
-      signal(cm, "focus", cm, e);
+      signal(cm, "focus", cm);
       cm.state.focused = true;
       addClass(cm.display.wrapper, "CodeMirror-focused");
       // This test prevents this from firing when a context
@@ -12500,11 +12477,11 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
     }
     restartBlink(cm);
   }
-  function onBlur(cm, e) {
+  function onBlur(cm) {
     if (cm.state.delayingBlurEvent) return;
 
     if (cm.state.focused) {
-      signal(cm, "blur", cm, e);
+      signal(cm, "blur", cm);
       cm.state.focused = false;
       rmClass(cm.display.wrapper, "CodeMirror-focused");
     }
@@ -13126,8 +13103,7 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
     var doc = cm.doc, x = pos.left, y;
     if (unit == "page") {
       var pageSize = Math.min(cm.display.wrapper.clientHeight, window.innerHeight || document.documentElement.clientHeight);
-      var moveAmount = Math.max(pageSize - .5 * textHeight(cm.display), 3);
-      y = (dir > 0 ? pos.bottom : pos.top) + dir * moveAmount;
+      y = pos.top + dir * (pageSize - (dir < 0 ? 1.5 : .5) * textHeight(cm.display));
     } else if (unit == "line") {
       y = dir > 0 ? pos.bottom + 3 : pos.top - 3;
     }
@@ -15080,7 +15056,7 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
       }
       if (!flattenSpans || curStyle != style) {
         while (curStart < stream.start) {
-          curStart = Math.min(stream.start, curStart + 5000);
+          curStart = Math.min(stream.start, curStart + 50000);
           f(curStart, curStyle);
         }
         curStyle = style;
@@ -15088,10 +15064,8 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
       stream.start = stream.pos;
     }
     while (curStart < stream.pos) {
-      // Webkit seems to refuse to render text nodes longer than 57444
-      // characters, and returns inaccurate measurements in nodes
-      // starting around 5000 chars.
-      var pos = Math.min(stream.pos, curStart + 5000);
+      // Webkit seems to refuse to render text nodes longer than 57444 characters
+      var pos = Math.min(stream.pos, curStart + 50000);
       f(pos, curStyle);
       curStart = pos;
     }
@@ -17177,7 +17151,7 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
 
   // THE END
 
-  CodeMirror.version = "5.19.0";
+  CodeMirror.version = "5.18.2";
 
   return CodeMirror;
 });
