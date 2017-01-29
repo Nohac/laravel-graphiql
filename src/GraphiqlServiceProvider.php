@@ -51,27 +51,11 @@ class GraphiqlServiceProvider extends ServiceProvider
     {
         $configPath = __DIR__.'/../config/graphiql.php';
         $this->mergeConfigFrom($configPath, 'graphiql');
-
-        $this->app['command.graphiql.publish'] = $this->app->share(
-            function () {
-                return new PublishCommand();
-            }
-        );
-
-        $this->commands(
-            'command.graphiql.publish'
-        );
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                PublishCommand::class
+            ]);
+        }
     }
 
-    /**
-     * Get the services provided by the provider.
-     *
-     * @return array
-     */
-    public function provides()
-    {
-        return [
-            'command.graphiql.publish',
-        ];
-    }
 }
