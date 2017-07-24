@@ -11,7 +11,7 @@ Add this to your `composer.json` file
     "noh4ck/graphiql": "@dev"
 ```
 
-Or run `composer "require noh4ck/graphiql:@dev"`
+Or run `composer require "noh4ck/graphiql:@dev"`
 
 Then open your `config/app.php` and add this line in `providers` section
 ```php
